@@ -27,6 +27,8 @@ public class Movie {
     private List<String> backdrops;
     @DocumentReference
     private List<Review> reviewIds;
+    private int numberOfRatings;
+    private double averageRating;
 
     public Movie(String imdbId , String title , String releaseDate,
                  String trailerLink , String poster , List<String> genres,
@@ -39,5 +41,6 @@ public class Movie {
         this.genres = genres;
         this.backdrops = backdrops;
         this.reviewIds = reviewIds;
+        this.averageRating = 5.0;
     }
 }
