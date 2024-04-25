@@ -2,8 +2,8 @@
 
 ## description
 
-This Project was made to showcase my understanding of web API, SpringBoot, and MongoDB.
-This Project is an anonymous movie review API that can be easily integrated into most front-end designs.
+Movie review Application modeled after IMDB and blog website. The project uses MongoDB
+And Springboot.
 
 ### DISCLAIMER
 
@@ -22,7 +22,7 @@ Currently, the user and authentication have not been fully implemented yet.
 6. Look at `Request navigation` below for all commands then copy and paste them into your selected option.
 
 #### Note:
-This program's responses or in JSON format to best Read I recommend Postman or terminal
+This program's responses are in JSON format to best Read I recommend Postman or terminal
 
 ### Request navigation
 
