@@ -6,9 +6,11 @@ import movieApi.movies.dto.request.CreateUserRequest;
 import movieApi.movies.dto.request.UpdateUserRequest;
 import movieApi.movies.dto.response.PrivateUserDTO;
 import movieApi.movies.dto.response.PublicUserDTO;
+import movieApi.movies.entity.Role;
 import movieApi.movies.entity.User;
 import movieApi.movies.exception.InvalidHTTPRequestException;
 import movieApi.movies.exception.UserNotFoundException;
+import movieApi.movies.repository.RoleRepository;
 import movieApi.movies.repository.UserRepository;
 import movieApi.movies.utils.CustomIdMaker;
 import movieApi.movies.utils.RequestValidator;
@@ -20,21 +22,22 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepository repo;
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private MongoTemplate template;
     @Autowired
@@ -45,7 +48,6 @@ public class UserService {
     /**
      * Creates and initializes Threads for later use.
      */
-    @PostConstruct
     public void initializeExecutor() {
         int initialThreadPoolSize = (int) calculateInitialThreadPoolSize();
         int maxThreadPoolSize = (int) calculateMaxThreadPoolSize();
@@ -86,6 +88,7 @@ public class UserService {
      * @throws InterruptedException if threads fail mid-execution.
      */
     public List<PublicUserDTO> getAllUsersConcurrently() throws InterruptedException {
+        initializeExecutor();
         List<Future<PublicUserDTO>> futures = new ArrayList<>();
         List<User> users = repo.findAll();
         List<PublicUserDTO> response = new ArrayList<>();
@@ -103,6 +106,7 @@ public class UserService {
                 throw new InterruptedException("Error 404: internal server error");
             }
         }
+        shutdownExecutorService();
         return response;
     }
 
@@ -187,13 +191,19 @@ public class UserService {
             }
         }
 
-        User createdUser = repo.insert(new User(imdbId ,
-                user.firstName() ,
-                user.lastName() ,
-                user.username() ,
-                user.password() ,
-                user.email() ,
-                new ArrayList<>()));
+        Role userRole = roleRepository.findByAuthority("USER").get();
+
+        Set<Role> authorities = new HashSet<>();
+        User createdUser = User.builder()
+                .firstName(user.firstName())
+                .lastName(user.lastName())
+                .username(user.username())
+                .password(user.password())
+                .email(user.email())
+                .authorities(authorities)
+                .build();
+
+        repo.insert(createdUser);
 
         return Converter.userToPrivateDTO(createdUser);
     }
@@ -259,8 +269,13 @@ public class UserService {
     /**
      * stops all threads
      */
-    @PreDestroy
     public void shutdownExecutorService() {
         executor.shutdown();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<User> userOpt = repo.findByUsername(username);
+        return userOpt.orElseThrow(() -> new UsernameNotFoundException("Invalid Credentials"));
     }
 }

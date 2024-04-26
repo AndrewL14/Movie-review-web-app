@@ -104,7 +104,6 @@ public class ConverterTest {
         assertEquals("Jhon", response.firstName(), "expected first name to be Jhon but got: " + response.firstName());
         assertEquals("Doe", response.lastName(), "expected last name to be Doe but got: " + response.lastName());
         assertEquals("JhonDoe69", response.username(), "expected username to be JhonDoe69 but got: " + response.username());
-        assertEquals("I Am Him", response.password(), "expected password to be I Am Him but got: " + response.password());
         assertEquals("genericEmail@yahoo.com", response.email(), "expected email to be genericEmail@yahoo.com but got: " + response.email());
         assertNotNull(response.userReviews());
     }

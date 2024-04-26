@@ -13,8 +13,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +32,6 @@ public class MovieService {
     /**
      * Initializes Threads Based on the current number of objects in repository
      */
-    @PostConstruct
     public void initializeExecutor() {
         int initialThreadPoolSize = (int) calculateInitialThreadPoolSize();
         int maxThreadPoolSize = (int) calculateMaxThreadPoolSize();
@@ -74,6 +71,7 @@ public class MovieService {
      * @throws InterruptedException If threading fails
      */
     public List<MovieDTO> findAllMoviesConcurrently() throws InterruptedException {
+        initializeExecutor();
         List<Future<MovieDTO>> futures = new ArrayList<>();
         List<Movie> movies = repository.findAll();
         List<MovieDTO> response = new ArrayList<>();
@@ -91,6 +89,7 @@ public class MovieService {
                 throw new InterruptedException("Error 404: internal server error");
             }
         }
+        shutdownExecutorService();
         return response;
     }
 
@@ -145,7 +144,6 @@ public class MovieService {
     /**
      * Stops all threads
      */
-    @PreDestroy
     public void shutdownExecutorService() {
         executor.shutdown();
     }
